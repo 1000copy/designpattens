@@ -16,9 +16,11 @@
 2. 可以设置形状的颜色，红色和黄色
 
 那么，系统中必然需要如下的Shape类：
+
     class Shape{draw(){}}
     class Rect extends Shape{draw(){}}
     class Circle extends Shape{draw(){}}
+
 以及，系统中必然需要如下的Color类：
     class Color{fill(){}}
     class Red extends Color{fill(){}}
@@ -37,11 +39,13 @@
       return new Rect()
     if (userSelected = "circle")
       return new Circle()
+
 ## Simple Factory
 
  Simple Factory的价值就是让调用者从创建逻辑中解脱，只要传递一个参数，就可以获得创建对象。实际上，从对象职责来说，这段代码不应该是Rect或者是Circle的，也不应该是UI类的，UI类在不同的应用中是不一样的，但是我们知道作为顶层类，需要负责UI显示和事件，不应该负责创建对象的逻辑。实际上，很多代码放到此处，特别容易导致代码拥挤，主控类职责过多的问题。
 
 最好引入一个新的类，像是这样：
+
     class ShapeCREATEOR{
         create(userSelected){
             if (userSelected = "rect")
@@ -51,8 +55,10 @@
         }
     }
 这个类的所有逻辑，都是专门用于创建其他类。因为非常常见，人们为他取名为Factory，其他被创建的类被称为Product。所以惯例上来说，此类的名字会冠以工厂名：
+
     class ShapeFactory
 根据传入的参数，决定创建哪一个产品类，此类就被称为简单工厂类（Simple Factory）。有了工厂类，使用者就可以直接使用工厂类获得需要的对象：
+
     var sf = new ShapeFactory()
     var rect = sf.create("rect")
 
