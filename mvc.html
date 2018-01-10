@@ -1,0 +1,244 @@
+<!doctype html>
+<html>
+<head>
+    <title>Javascript MVC</title>
+    <script src="https://code.jquery.com/jquery-2.2.3.min.js" integrity="sha256-a23g1Nt4dtEYOj7bR+vTu7+T8VP13humZFBJNIYoEJo=" crossorigin="anonymous"></script>
+    <style>
+    </style>
+</head>
+<body>
+    <div class="js-container">
+        <input type="text" class="js-task-textbox">
+        <input type="button" class="js-add-task-button" value="Add Task">
+        <div class="js-tasks-container"></div>
+        <!-- end tasks -->
+        <input type="button" class="js-complete-task-button" value="Complete Tasks">
+        <input type="button" class="js-delete-task-button" value="Delete Tasks">
+    </div>
+    <script>
+        var Event = function (sender) {
+            this._sender = sender;
+            this._listeners = [];
+        }
+        Event.prototype = {
+            attach: function (listener) {
+                this._listeners.push(listener);
+            },
+            notify: function (args) {
+                for (var i = 0; i < this._listeners.length; i += 1) {
+                    this._listeners[i](this._sender, args);
+                }
+            }
+        };
+        var TaskModel = function () {
+             this.tasks = [];
+             this.selectedTasks = [];
+             this.addTaskEvent = new Event(this);
+             this.removeTaskEvent = new Event(this);
+             this.setTasksAsCompletedEvent = new Event(this);
+             this.deleteTasksEvent = new Event(this);
+         };
+         TaskModel.prototype = {
+             addTask: function (task) {
+                 this.tasks.push({
+                     taskName: task,
+                     taskStatus: 'uncompleted'
+                 });
+                 this.addTaskEvent.notify();
+             },
+             getTasks: function () {
+                 return this.tasks;
+             },
+             setSelectedTask: function (taskIndex) {
+                 this.selectedTasks.push(taskIndex);
+             },
+             unselectTask: function (taskIndex) {
+                 this.selectedTasks.splice(taskIndex, 1);
+             },
+             setTasksAsCompleted: function () {
+                 var selectedTasks = this.selectedTasks;
+                 for (var index in selectedTasks) {
+                     this.tasks[selectedTasks[index]].taskStatus = 'completed';
+                 }
+                 this.setTasksAsCompletedEvent.notify();
+                 this.selectedTasks = [];
+             },
+             deleteTasks: function () {
+                 var selectedTasks = this.selectedTasks.sort();
+                 for (var i = selectedTasks.length - 1; i >= 0; i--) {
+                     this.tasks.splice(this.selectedTasks[i], 1);
+                 }
+                 // clear the selected tasks
+                 this.selectedTasks = [];
+                 this.deleteTasksEvent.notify();
+             }
+         };
+        var TaskView = function (model) {
+            this.model = model;
+            this.addTaskEvent = new Event(this);
+            this.selectTaskEvent = new Event(this);
+            this.unselectTaskEvent = new Event(this);
+            this.completeTaskEvent = new Event(this);
+            this.deleteTaskEvent = new Event(this);
+            this.init();
+        };
+        TaskView.prototype = {
+            init: function () {
+                this.createChildren()
+                    .setupHandlers()
+                    .enable();
+            },
+            createChildren: function () {
+                // cache the document object
+                this.$container = $('.js-container');
+                this.$addTaskButton = this.$container.find('.js-add-task-button');
+                this.$taskTextBox = this.$container.find('.js-task-textbox');
+                this.$tasksContainer = this.$container.find('.js-tasks-container');
+                return this;
+            },
+            setupHandlers: function () {
+                this.addTaskButtonHandler = this.addTaskButton.bind(this);
+                this.selectOrUnselectTaskHandler = this.selectOrUnselectTask.bind(this);
+                this.completeTaskButtonHandler = this.completeTaskButton.bind(this);
+                this.deleteTaskButtonHandler = this.deleteTaskButton.bind(this);
+                /**
+                Handlers from Event Dispatcher
+                */
+                this.addTaskHandler = this.addTask.bind(this);
+                this.clearTaskTextBoxHandler = this.clearTaskTextBox.bind(this);
+                this.setTasksAsCompletedHandler = this.setTasksAsCompleted.bind(this);
+                this.deleteTasksHandler = this.deleteTasks.bind(this);
+                return this;
+            },
+            enable: function () {
+                this.$addTaskButton.click(this.addTaskButtonHandler);
+                this.$container.on('click', '.js-task', this.selectOrUnselectTaskHandler);
+                this.$container.on('click', '.js-complete-task-button', this.completeTaskButtonHandler);
+                this.$container.on('click', '.js-delete-task-button', this.deleteTaskButtonHandler);
+                /**
+                 * Event Dispatcher
+                 */
+                this.model.addTaskEvent.attach(this.addTaskHandler);
+                this.model.addTaskEvent.attach(this.clearTaskTextBoxHandler);
+                this.model.setTasksAsCompletedEvent.attach(this.setTasksAsCompletedHandler);
+                this.model.deleteTasksEvent.attach(this.deleteTasksHandler);
+                return this;
+            },
+            addTaskButton: function () {
+                this.addTaskEvent.notify({
+                    task: this.$taskTextBox.val()
+                });
+            },
+            completeTaskButton: function () {
+                this.completeTaskEvent.notify();
+            },
+            deleteTaskButton: function () {
+                this.deleteTaskEvent.notify();
+            },
+            selectOrUnselectTask: function () {
+                var taskIndex = $(event.target).attr("data-index");
+                if ($(event.target).attr('data-task-selected') == 'false') {
+                    $(event.target).attr('data-task-selected', true);
+                    this.selectTaskEvent.notify({
+                        taskIndex: taskIndex
+                    });
+                } else {
+                    $(event.target).attr('data-task-selected', false);
+                    this.unselectTaskEvent.notify({
+                        taskIndex: taskIndex
+                    });
+                }
+            },
+            show: function () {
+                this.buildList();
+            },
+            buildList: function () {
+                var tasks = this.model.getTasks();
+                var html = "";
+                var $tasksContainer = this.$tasksContainer;
+                $tasksContainer.html('');
+                var index = 0;
+                for (var task in tasks) {
+                    if (tasks[task].taskStatus == 'completed') {
+                        html += "<div style='color:green;'>";
+                    } else {
+                        html += "<div>";
+                    }
+                    $tasksContainer.append(html + 
+                        "<label><input type='checkbox' class='js-task' data-index=" + index + " data-task-selected='false'>" + tasks[task].taskName + "</label></div>");
+                    index++;
+                }
+            },
+            /* -------------------- Handlers From Event Dispatcher ----------------- */
+            clearTaskTextBox: function () {
+                this.$taskTextBox.val('');
+            },
+            addTask: function () {
+                this.show();
+            },
+            setTasksAsCompleted: function () {
+                this.show();
+            },
+            deleteTasks: function () {
+                this.show();
+            }
+            /* -------------------- End Handlers From Event Dispatcher ----------------- */
+        };
+        var TaskController = function (model, view) {
+            this.model = model;
+            this.view = view;
+            this.init();
+        };
+        TaskController.prototype = {
+            init: function () {
+                this.createChildren()
+                    .setupHandlers()
+                    .enable();
+            },
+            createChildren: function () {
+                // no need to create children inside the controller
+                // this is a job for the view
+                // you could all as well leave this function out
+                return this;
+            },
+            setupHandlers: function () {
+                this.addTaskHandler = this.addTask.bind(this);
+                this.selectTaskHandler = this.selectTask.bind(this);
+                this.unselectTaskHandler = this.unselectTask.bind(this);
+                this.completeTaskHandler = this.completeTask.bind(this);
+                this.deleteTaskHandler = this.deleteTask.bind(this);
+
+                return this;
+            },
+            enable: function () {
+                this.view.addTaskEvent.attach(this.addTaskHandler);
+                this.view.completeTaskEvent.attach(this.completeTaskHandler);
+                this.view.deleteTaskEvent.attach(this.deleteTaskHandler);
+                this.view.selectTaskEvent.attach(this.selectTaskHandler);
+                this.view.unselectTaskEvent.attach(this.unselectTaskHandler);
+                return this;
+            },
+            addTask: function (sender, args) {
+                this.model.addTask(args.task);
+            },
+            selectTask: function (sender, args) {
+                this.model.setSelectedTask(args.taskIndex);
+            },
+            unselectTask: function (sender, args) {
+                this.model.unselectTask(args.taskIndex);
+            },
+            completeTask: function () {
+                this.model.setTasksAsCompleted();
+            },
+            deleteTask: function () {
+                this.model.deleteTasks();
+            }
+        };
+        $(function () {
+             var model = new TaskModel(),
+                 view = new TaskView(model),
+                 controller = new TaskController(model, view);
+         });
+</script>
+</body>
+</html> 
