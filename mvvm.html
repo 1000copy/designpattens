@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>    
+    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.min.js" type="text/javascript"></script>
+</head>
+<body>
+<div><span>Name</span><input type="text" data-bind="Name" /></div>
+<div><span>Age</span><input type="text" data-bind="Age" /></div>
+<script type="text/javascript">
+	// function 
+	class MVVM{
+		constructor(){
+
+		}
+		captalize(string) {
+		    return string.charAt(0).toUpperCase() + string.slice(1);
+		}
+		CreateGSer(obj) {
+			self = this
+			for (var prop in obj) {
+				if ($.isFunction(obj[prop]))
+					continue;
+				(function (privatename, proto) {
+					var propname = self.captalize(privatename.replace("_", ""));
+					Object.defineProperty(proto, propname, {
+						get: function () {
+							return obj[privatename];
+					   },
+						set: function (value) {
+							obj[privatename] = value;
+							obj["PropertyChanged"](propname);
+						}
+					});
+				})(prop, obj);
+			}
+		}
+		observe(obj) {
+			this.CreateGSer(person)
+			$('[data-bind]').each(function (index, item) {
+				var dataBindField = $(item).attr("data-bind");
+				$(item).change(function () {
+					obj[dataBindField] = $(this).val();
+				});
+				obj["PropertyChanged"] = function (propname) {
+					$('[data-bind=' + propname + ']').val(obj[propname]);
+				};
+			});
+		}
+	}
+	var mvvm = new MVVM()
+	function Person() {
+	    this._name = ""
+	    this._age = ""
+    }
+	var person = new Person();
+	mvvm.observe(person);
+	person.Name = "Liu Chuanjun"
+	person.Age = "18"
+</script>
+</body>
+</html>
