@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>MVVM</title>
+    <script src="http://ajax.microsoft.com/ajax/jquery/jquery-1.6.min.js" type="text/javascript"></script>
+</head>
+<body>
+    <div class="mainDiv">
+        <label>Click to =></label>
+        <div>
+            <a class="link" command="linkClickCommand" cmdArg="A">link a</a>
+        </div>
+        <div>
+            <a class="link" command="linkClick1Command" cmdEvents="click" cmdArg="B">link b</a>
+        </div>
+    </div>
+    <script>
+         (function (window, $) {
+            "use strict";
+            function endsWith(str, strEnding) {
+                var ending = str.substr(str.length - strEnding.length, strEnding.length);
+                return ending === strEnding;
+            }
+            window.mvvm = {
+                bindCommands: function (viewModel) {
+                    var key,
+                        element = $(document);
+                    for (key in viewModel) {
+                        if (endsWith(key, "Command")) {
+                            element.selector = "[command='" + key + "']:not([cmdEvents])";
+                            element.live('click', viewModel, viewModel[key]);
+                            var events = ["click","change","keyup","keydown"]
+                            for (var i = 0; i < events.length; i++){
+                                var e = events[i]
+                                element.selector = "[command='" + key + "'][cmdEvents~="+e+"]";
+                                element.live(e, viewModel, viewModel[key]);
+                            }
+                        }
+                    }
+                }
+            };
+        }(window, jQuery));
+        (function (window, $, mvvm) {
+            "use strict";
+            window.Model = {
+                linkClickCommand: function (arg) {
+                    var containerId = $(this).attr("cmdArg");
+                    console.log(containerId)
+                },
+                linkClick1Command: function (arg) {
+                    var containerId = $(this).attr("cmdArg");
+                    console.log(containerId)
+                },
+                bind: function () {
+                    mvvm.bindCommands(this);
+                }
+            };
+            $(document).ready(function () {
+                window.Model.bind();
+            });
+        }(window, jQuery, mvvm));
+    </script>
+</body>
+</html>
