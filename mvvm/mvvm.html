@@ -71,19 +71,16 @@
             var ending = str.substr(str.length - strEnding.length, strEnding.length);
             return ending === strEnding;
         }
-        bindCommands(viewModel) {
+        bindCommands(obj) {
             var key,
                 element = $(document);
-            for (let key of Object.getOwnPropertyNames(Object.getPrototypeOf(viewModel))) {
-            // for (key in viewModel) {
+            for (let key of Object.getOwnPropertyNames(Object.getPrototypeOf(obj))) {
                 if (this.endsWith(key, "Command")) {
-                    element.selector = "[command='" + key + "']:not([cmdEvents])";
-                    element.live('click', viewModel, viewModel[key]);
-                    var events = ["click","change","keyup","keydown"]
-                    for (var i = 0; i < events.length; i++){
-                        var e = events[i]
-                        element.selector = "[command='" + key + "'][cmdEvents~="+e+"]";
-                        element.live(e, viewModel, viewModel[key]);
+                	var selector = `[command='${key}']:not([cmdEvents])`
+                    var elems = document.querySelectorAll(selector)
+                    for (var i = 0; i < elems.length; i++) {
+                    	var elem = elems[i]
+                    	elem.onclick = obj[key].bind(obj,obj)
                     }
                 }
             }
@@ -95,19 +92,16 @@
 			this._name = ""
 		    this._age = ""	
 		}
-		clickCommand(){
-			console.log("clicked")
+		clickCommand(obj){
+			// console.log("clicked",obj,this)
+			// console.log("clicked")
+			console.log(this.Name,this.Age)
 		}	
 	}
-	// function Person() {
-	//     this._name = ""
-	//     this._age = ""
- 	// }
 	var person = new Person();
 	mvvm.observe(person);
 	person.Name = "Liu Chuanjun"
 	person.Age = "18"
-
 </script>
 </body>
 </html>
