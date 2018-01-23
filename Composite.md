@@ -77,3 +77,22 @@ Composite模式，可以帮助客户代码以一致的方式来操作复合对�
 另一个常见的例子是表达式计算。"2+3X5" 就是一个合法的表达式，它的，其中的2就是一个NumbricOperand，"3X5"就是一个CompositeOperand。无论是复合操作数，还是单体操作数，都支持一个计算的操作。每个CompositeOperand都包括多个NumbricOperand。
 
 ![](https://user-gold-cdn.xitu.io/2018/1/19/1610c7c67887c0bc)
+
+在jquery代码使用了Composite模式，来做集合和单项目操作的一致性，比如为一组对象设置onchange事件，可以这样：
+
+
+    var binds = document.querySelectorAll("input")
+    for (var i = 0; i < binds.length; i++) {
+        var bind = binds[i]
+        bind.dataBindField = bind.getAttribute(KEY1)
+        bind.onchange = function(sender){
+            console.log(sender)
+        }
+    }
+
+如果使用jquery，代码可以不必区分集合还是单项，可以一致的操作元素，比如对元素设置value，不管是集合还是单项都使用方法.onchange():
+
+    $('input').change(function (sender) {
+        console.log(sender)
+    });
+        

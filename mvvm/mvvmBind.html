@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html>
-<head>    
-    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.min.js" type="text/javascript"></script>
+<head>
+	<title>MVVM</title>
+    <script src="../jquery-1.6.min.js" type="text/javascript"></script>
 </head>
 <body>
 <div><span>Name</span><input type="text" data-bind="Name" /></div>
 <div><span>Age</span><input type="text" data-bind="Age" /></div>
+<button command="clickCommand">click me</button>
 <script type="text/javascript">
 	// function 
 	class MVVM{
@@ -15,47 +17,97 @@
 		captalize(string) {
 		    return string.charAt(0).toUpperCase() + string.slice(1);
 		}
-		CreateGSer(obj) {
-			self = this
+		isFunction(variable){
+			return typeof variable === "function"
+		}
+		observeProp(obj) {
 			for (var prop in obj) {
-				if ($.isFunction(obj[prop]))
+				if (this.isFunction(obj[prop])){
+					console.log(obj[prop])
 					continue;
-				(function (privatename, proto) {
-					var propname = self.captalize(privatename.replace("_", ""));
-					Object.defineProperty(proto, propname, {
-						get: function () {
-							return obj[privatename];
-					   },
-						set: function (value) {
-							obj[privatename] = value;
-							obj["PropertyChanged"](propname);
-						}
-					});
-				})(prop, obj);
+				}
+				this.doSetterGetter(prop, obj);
 			}
 		}
-		observe(obj) {
-			this.CreateGSer(person)
-			$('[data-bind]').each(function (index, item) {
-				var dataBindField = $(item).attr("data-bind");
-				$(item).change(function () {
-					obj[dataBindField] = $(this).val();
-				});
-				obj["PropertyChanged"] = function (propname) {
-					$('[data-bind=' + propname + ']').val(obj[propname]);
-				};
+		doSetterGetter(privatename, obj) {
+			self = this
+			var propname = self.captalize(privatename.replace("_", ""));
+			Object.defineProperty(obj, propname, {
+				get: function () {
+					return obj[privatename];
+			   },
+				set: function (value) {
+					obj[privatename] = value;
+					obj["PropertyChanged"](propname);
+				}
 			});
 		}
+		observe(obj){
+			this.observeProp(obj)
+			this.observeElement(obj)
+			this.bindCommands(obj)
+		}
+		observeElement(obj){
+			var KEY1 = 'data-bind'
+			var KEY2 = `[${KEY1}]`
+			var binds = document.querySelectorAll(KEY2)
+			for (var i = 0; i < binds.length; i++) {
+				var bind = binds[i]
+				bind.dataBindField = bind.getAttribute(KEY1)
+				bind.onchange = function(sender){
+					obj[sender.target.dataBindField] = sender.target.value
+				}
+			}
+			obj["PropertyChanged"] = function (propname) {
+				var KEY = `[data-bind=${propname}]`
+				var binds = document.querySelectorAll(KEY)
+				for (var i = 0; i < binds.length; i++) {
+					var bind = binds[i]
+					bind.value = obj[propname]
+				}
+			};
+		}
+		endsWith(str, strEnding) {
+            var ending = str.substr(str.length - strEnding.length, strEnding.length);
+            return ending === strEnding;
+        }
+        bindCommands(viewModel) {
+            var key,
+                element = $(document);
+            for (let key of Object.getOwnPropertyNames(Object.getPrototypeOf(viewModel))) {
+            // for (key in viewModel) {
+                if (this.endsWith(key, "Command")) {
+                    element.selector = "[command='" + key + "']:not([cmdEvents])";
+                    element.live('click', viewModel, viewModel[key]);
+                    var events = ["click","change","keyup","keydown"]
+                    for (var i = 0; i < events.length; i++){
+                        var e = events[i]
+                        element.selector = "[command='" + key + "'][cmdEvents~="+e+"]";
+                        element.live(e, viewModel, viewModel[key]);
+                    }
+                }
+            }
+        }
 	}
 	var mvvm = new MVVM()
-	function Person() {
-	    this._name = ""
-	    this._age = ""
-    }
+	class Person{
+		constructor(){
+			this._name = ""
+		    this._age = ""	
+		}
+		clickCommand(){
+			console.log("clicked")
+		}	
+	}
+	// function Person() {
+	//     this._name = ""
+	//     this._age = ""
+ 	// }
 	var person = new Person();
 	mvvm.observe(person);
 	person.Name = "Liu Chuanjun"
 	person.Age = "18"
+
 </script>
 </body>
 </html>
