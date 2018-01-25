@@ -114,6 +114,6 @@
 2. 继续说对象职责分离。单单以此次重构的函数SaveEShopProductSkuMapping。好像此工作应该从当前类移动到EShopProductSkuMapping类内，作为EShopProductSkuMapping.save为妥当
 3. 如果EShopProductSkuMapping不允许去修改怎么办？可以使用Decorator模式，在不修改此代码的前提下，为此类提供新的功能。总之办法是有的。
 4. 命名空间的利用。EShopProductSkuMapping的命令加入EShop前缀，此种情况也不少，感觉要么是冗余的，要么就是namespace这个技术特性利用的不够。一个猜想
-
+5. 名词缩小，从EShopProductSkuMapping到Sku。去掉前缀，去掉无意义的Mapping ,名字就是ProductSku，其实，直接就叫做SKU也是可以的。因为SKU本来就是最小商品的概念，因此product也无必要。
 
 
