@@ -1,5 +1,9 @@
-## 目录
+# 目录
 
+## 重构
+### [report1](refactor/eshop1.md)
+
+## 设计模式
 ### [adapter](adapter.md)
 ### [bridge](bridge.md)
 ### [composite](composite.md)

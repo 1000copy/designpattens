@@ -1,5 +1,34 @@
-2018年01月25日 ，做代码的全复杂度报告，找到了这样的一段代码，项目组认为需要修改，提交给我，希望我协助支持，找到比较好的重构方向和方法。
+# 代码质量报告
+
+## 概要
+
+### 合作项目：网店应用
+
+2018年01月24日 ，做代码的全复杂度报告，找到了这样的一段代码，项目组认为需要修改，希望我协助支持，找到比较好的重构方向和方法。
 这个项目是一个网店服务，它需要从淘宝等电商平台下载商品并做保存。
+
+### 工件
+
+1. 本报告
+2. 重构过程视频
+
+### 工作周期
+
+1. 2018年01月23日 复杂度报告，格式为souremonitor输出的excel文件
+2.               报告取样。方法SaveEShopProductSkuMapping
+3. 2018年01月24日 样本重构过程。3小时单独阅读代码，1小时结对阅读，3小时报告和录制重构视频 1小时修改
+4. 2018年01月25日 完成一阶段重构，对查询existMapping的职责聚合重构
+
+### 参与人
+
+Recc ,Jml
+
+### 感谢
+
+Jml组的职业化态度和对此事的重视。在加班和发版的双重压力下，认真配合结对代码阅读支持，认真听取代码修改建议并给出反馈，并一天后给出完成结果。
+
+## 报告正文
+
 
 这段代码，确实单看指标并不算大：
 
@@ -117,3 +146,43 @@
 5. 名词缩小，从EShopProductSkuMapping到Sku。去掉前缀，去掉无意义的Mapping ,名字就是ProductSku，其实，直接就叫做SKU也是可以的。因为SKU本来就是最小商品的概念，因此product也无必要。
 
 
+## 回复 （2018年01月25日）
+
+昨天的函数，顺着讨论的思路，先重构的第一版。
+重构的过程中还发现了一些其他的问题：比如 IsSkuMappingPlatformChanged 重复在判断。都做了调整。
+第一版先改成这样，让同事一起检查等效性，暂时未发现问题，代码提交上去了，你先看下。
+关于职责单一的问题，代码的后半部分，暂时没有提单独的函数，提出来反而有点怪异，就先没急着改了。
+
+    public void SaveEShopProductSkuMapping(DbHelper dbHelper, EShopProductSkuMapping mapping, ulong textilesPropId)
+    {
+        EShopProductSkuMapping existedMapping = GetEShopProductSkuMappingExisted(mapping);
+        if (null == existedMapping)
+        {
+            bool isSuccess = InsertProductSkuMapping(dbHelper, mapping);
+            if (isSuccess && _operateType == ProductMappingLogOpreateType.Refreash)
+            {
+                _logger.InsertLog(existedMapping, mapping, ProductMappingLogOpreateType.Refreash);
+            }
+            return;
+        }
+        mapping.Id = existedMapping.Id;
+        mapping.IsRedundat = false;
+        
+        if (!IsSkuNeedRefresh(mapping, existedMapping))
+        {
+            return;
+        }
+        bool isModSucess = ModifyProductSkuMapping(dbHelper, mapping);
+        
+        if (IsSkuMappingPlatformChanged(existedMapping, mapping))
+        {                  
+            IList<ulong> syncSkuIds = SkuGetterUtil.GetSkuIds(dbHelper, mapping, _isMatchPtypeByXcode);
+            _logger.DoMarkQtyChange(dbHelper, ProfileId, syncSkuIds);
+            
+            if (isModSucess && _operateType == ProductMappingLogOpreateType.Refreash && _isMatchPtypeByXcode )
+            {
+                  _logger.InsertLog(existedMapping, mapping, ProductMappingLogOpreateType.Refreash);
+            }
+        }
+        
+    }
