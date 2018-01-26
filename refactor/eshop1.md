@@ -1,33 +1,5 @@
-# 代码质量报告
 
-## 概要
-
-### 合作项目：网店应用
-
-2018年01月24日 ，做代码的全复杂度报告，找到了这样的一段代码，项目组认为需要修改，希望我协助支持，找到比较好的重构方向和方法。
-这个项目是一个网店服务，它需要从淘宝等电商平台下载商品并做保存。
-
-### 工件
-
-1. 本报告
-2. 重构过程视频
-
-### 工作周期
-
-1. 2018年01月23日 复杂度报告，格式为souremonitor输出的excel文件
-2.               报告取样。方法SaveEShopProductSkuMapping
-3. 2018年01月24日 样本重构过程。3小时单独阅读代码，1小时结对阅读，3小时报告和录制重构视频 1小时修改
-4. 2018年01月25日 完成一阶段重构，对查询existMapping的职责聚合重构
-
-### 参与人
-
-Recc ,Jml
-
-### 感谢
-
-Jml组的职业化态度和对此事的重视。在加班和发版的双重压力下，认真配合结对代码阅读支持，认真听取代码修改建议并给出反馈，并一天后给出完成结果。
-
-## 报告正文
+### 报告正文
 
 
 这段代码，确实单看指标并不算大：
@@ -185,4 +157,21 @@ Jml组的职业化态度和对此事的重视。在加班和发版的双重压�
             }
         }
         
+    }
+    public EShopProductSkuMapping GetEShopProductSkuMappingExisted(EShopProductSkuMapping skuMapping)
+    {
+        if (null == LocalEShopProductSkuMapping || LocalEShopProductSkuMapping.Count == 0 || null == skuMapping)
+        {
+            return null;
+        }
+        
+        EShopProductSkuMapping existedMapping = LocalEShopProductSkuMapping.FirstOrDefault(m => IsSameSku(skuMapping, m));
+        if (null == existedMapping)
+        {
+            if (!string.IsNullOrEmpty(skuMapping.PlatformNumId) && !string.IsNullOrEmpty(skuMapping.PlatformSkuId))
+            {
+                return LocalEShopProductSkuMapping.FirstOrDefault(m =>skuMapping.PlatformNumId == m.PlatformNumId && skuMapping.PlatformSkuId == m.PlatformSkuId);
+            }
+        }
+        return existedMapping;
     }
