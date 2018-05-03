@@ -1,0 +1,101 @@
+<input id = "count" type="text" value="0">
+<div>$:<span id="dollar">0</span></div>
+<div>Mile:<span id="mile">0</span></div>
+<button id="inc">inc</button>
+<script type="text/javascript">
+	window.onload = function(){
+		newStyle()
+		// text.innerHtml = 2
+	}
+	function oldStyle(){
+		var count = 0
+		var text = document.getElementById('count')
+		var dollar = document.getElementById('dollar')
+		var mile = document.getElementById('mile')
+		var button = document.getElementById('inc')
+		button.onclick = function(sender){
+			count +=  1
+			text.value = count
+			dollar.innerHTML = count
+			mile.innerHTML = count
+		}
+	}
+	function newStyle(){
+		var m = new ModelCount()
+		var d = new ViewDollar()
+		var mile = new ViewMile()
+		var c = new ViewCount()
+		var b = new ViewButton()
+		var c = new Presenter(m,d,mile,c,b)
+	}
+	class Model{
+	}
+	
+	class View{
+		render(m){
+
+		}
+	}
+	class Presenter{
+		constructor(m,dollar,mile,count,button){
+			this.mile = mile
+			this.count = count
+			this.button = button
+			this.dollar = dollar
+			this.m = m
+			var self = this
+			this.button.addHandler(this.handler.bind(this))
+		}
+		handler(){
+			this.m.inc()
+			this.count.render(this.m.count)
+			this.mile.render(this.m.count)
+			this.dollar.render(this.m.count)			
+		}
+	}
+	class ModelCount extends Model{
+		constructor(){
+			super()
+			this.count = 0
+		}
+		inc(){
+			this.count ++
+		}
+	}
+	class ViewMile extends View{
+		constructor(m){
+			super()
+			this.mile = document.getElementById('mile')
+		}
+		render(m){
+			this.mile.innerHTML = m
+		}
+	}
+	class ViewDollar extends View{
+		constructor(){
+			super()
+			this.dollar = document.getElementById('dollar')
+		}
+		render(m){
+			this.dollar.innerHTML = m
+		}	
+	}
+	class ViewCount extends View{
+		constructor(){
+			super()
+			this.count = document.getElementById('count')
+		}
+		render(m){
+			this.count.value = m 
+		}
+	}
+	class ViewButton extends View{
+		constructor(){
+			super()
+			this.button = document.getElementById('inc')
+		}
+		addHandler(handler){
+			this.button.onclick = handler
+		}
+	}
+</script>

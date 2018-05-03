@@ -1,0 +1,118 @@
+<input id = "count" type="text" value="0">
+<div>$:<span id="dollar">0</span></div>
+<div>Mile:<span id="mile">0</span></div>
+<button id="inc">inc</button>
+<script type="text/javascript">
+	window.onload = function(){
+		newStyle()
+		// text.innerHtml = 2
+	}
+	function oldStyle(){
+		var count = 0
+		var text = document.getElementById('count')
+		var dollar = document.getElementById('dollar')
+		var mile = document.getElementById('mile')
+		var button = document.getElementById('inc')
+		button.onclick = function(sender){
+			count +=  1
+			text.value = count
+			dollar.innerHTML = count
+			mile.innerHTML = count
+		}
+	}
+	function newStyle(){
+		var m = new ModelCount()
+		var v = new ViewDollar(m)
+		var c = new ControllerDollar(m,v)
+		var v = new ViewMile(m)
+		var c = new ControllerMile(m,v)
+		var v = new ViewCount(m)
+		var c = new ControllerCount(m,v)
+	}
+	function Subject() {
+	    const observers = [];
+	    return {    
+	        add: function(item) {
+	            observers.push(item);
+	        },
+	        removeAll: function() {
+	            observers.length = 0;
+	        },
+	        notifyObservers() {
+	        	observers.forEach(elem => {
+	                elem.notify && elem.notify();
+	            });
+	        }
+	    };
+	}
+	class Model{
+		constructor(){
+			this.observer = Subject()
+		}
+		notifyObservers(){
+			this.observer.notifyObservers()
+		}
+	}
+	
+	class View{
+		constructor(m){
+			this.m = m
+			this.m.observer.add(this)
+		}
+		notify(){
+
+		}
+	}
+	class Controller{
+		constructor(m,v){
+			this.v = v
+			this.m = m
+			var self = this
+			this.button = document.getElementById('inc')
+			this.button.onclick = function(sender){
+				self.m.inc()
+			}
+		}
+	}
+	class ModelCount extends Model{
+		constructor(){
+			super()
+			this.count = 0
+		}
+		inc(){
+			this.count ++
+			this.notifyObservers()
+		}
+	}
+	class ViewMile extends View{
+		constructor(m){
+			super(m)
+			this.mile = document.getElementById('mile')
+		}
+		notify(){
+			this.mile.innerHTML = this.m.count 
+		}
+	}
+	class ViewDollar extends View{
+		constructor(m){
+			super(m)
+			this.dollar = document.getElementById('dollar')
+		}
+		notify(){
+			this.dollar.innerHTML = this.m.count 
+		}	
+	}
+	class ViewCount extends View{
+		constructor(m){
+			super(m)
+			this.count = document.getElementById('count')
+		}
+		notify(){
+			this.count.value = this.m.count 
+		}
+	}
+	class ControllerMile extends Controller{}
+	class ControllerCount extends Controller{}
+	class ControllerDollar extends Controller{}
+</script>
+
